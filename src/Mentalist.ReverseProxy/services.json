@@ -1,0 +1,103 @@
+{
+    "ReverseProxyRoutes": {
+        "web": {
+            "Path": "",
+            "Prefix": "/web",
+            "HealthCheck": {
+                "Enabled": true,
+                "Path": "/index.html"
+            },
+            "Endpoints": [
+                "http://localhost:40123"
+            ]
+        },
+        "login": {
+            "Path": "/login",
+            "Prefix": "",
+            "HealthCheck": {
+                "Enabled": true,
+                "Path": "/status"
+            },
+            "Endpoints": [
+                "http://localhost:40123/login"
+            ]
+        },
+        "admin": {
+            "Path": "/admin",
+            "Prefix": "",
+            "HealthCheck": {
+                "Enabled": true,
+                "Path": "/status"
+            },
+            "Endpoints": [
+                "http://localhost:40123/admin"
+            ]
+        },
+        "api": {
+            "Path": "/api",
+            "Prefix": "",
+            "HealthCheck": {
+                "Enabled": true,
+                "Path": "/status"
+            },
+            "Endpoints": [
+                "http://localhost:40123/api"
+            ]
+        },
+        "main": {
+            "Path": "/main",
+            "Prefix": "",
+            "HealthCheck": {
+                "Enabled": true,
+                "Path": "/status"
+            },
+            "Endpoints": [
+                "http://localhost:40123/main"
+            ]
+        },
+        "documents": {
+            "Path": "/documents",
+            "Prefix": "",
+            "HealthCheck": {
+                "Enabled": true,
+                "Path": "/status"
+            },
+            "Endpoints": [
+                "http://localhost:40123/documents"
+            ]
+        },
+        "calendars": {
+            "Path": "/calendars",
+            "Prefix": "",
+            "HealthCheck": {
+                "Enabled": true,
+                "Path": "/status"
+            },
+            "Endpoints": [
+                "http://localhost:40123/calendars"
+            ]
+        },
+        "processing": {
+            "Path": "/processing",
+            "Prefix": "",
+            "HealthCheck": {
+                "Enabled": true,
+                "Path": "/status"
+            },
+            "Endpoints": [
+                "http://localhost:40123/processing"
+            ]
+        },
+        "analytics": {
+            "Path": "/analytics",
+            "Prefix": "",
+            "HealthCheck": {
+                "Enabled": true,
+                "Path": "/status"
+            },
+            "Endpoints": [
+                "http://localhost:40123/analytics"
+            ]
+        }
+    }
+}
