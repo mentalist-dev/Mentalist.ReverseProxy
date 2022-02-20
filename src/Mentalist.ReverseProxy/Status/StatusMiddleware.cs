@@ -9,19 +9,30 @@ public class StatusMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly IProxyConfigProvider _proxyConfigProvider;
-    private readonly byte[] _response;
+    private readonly byte[] _healthyResponse;
+    private readonly byte[] _unhealthyResponse;
 
     public StatusMiddleware(RequestDelegate next, IProxyConfigProvider proxyConfigProvider)
     {
         _next = next ?? throw new ArgumentNullException(nameof(next));
         _proxyConfigProvider = proxyConfigProvider;
 
-        var data = new
+        var healthy = new
         {
-            Timestamp = DateTime.UtcNow
+            Status = "Healthy"
         };
 
-        _response = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(data, new JsonSerializerOptions
+        _healthyResponse = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(healthy, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        }));
+
+        var unhealthy = new
+        {
+            Status = "No routes available"
+        };
+
+        _unhealthyResponse = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(unhealthy, new JsonSerializerOptions
         {
             WriteIndented = true
         }));
@@ -42,11 +53,11 @@ public class StatusMiddleware
         var config = _proxyConfigProvider.GetConfig();
         if (config.Routes.Count == 0)
         {
-            response.StatusCode = (int) HttpStatusCode.ServiceUnavailable;
-            return ValueTask.CompletedTask;
+            response.StatusCode = (int) HttpStatusCode.TooManyRequests; // put service to warning state
+            return response.Body.WriteAsync(_unhealthyResponse, context.RequestAborted);
         }
 
         response.StatusCode = (int)HttpStatusCode.OK;
-        return response.Body.WriteAsync(_response, context.RequestAborted);
+        return response.Body.WriteAsync(_healthyResponse, context.RequestAborted);
     }
 }

@@ -1,12 +1,15 @@
 ﻿using System.Collections.Concurrent;
 using System.Text.Json;
 using Mentalist.ReverseProxy.Routing;
+using Mentalist.ReverseProxy.Settings;
 
 namespace Mentalist.ReverseProxy.Consul;
 
 public interface IConsulMonitor
 {
     void Start(CancellationToken cancellationToken);
+    Task Register(ServiceAddress physical, ServiceAddress advertised);
+    Task UnRegister(ServiceAddress physical);
 }
 
 public class ConsulMonitor: IConsulMonitor
@@ -15,6 +18,7 @@ public class ConsulMonitor: IConsulMonitor
 
     private readonly string _consulEndpoint;
     private readonly string _consulTag;
+    private readonly string _advertise;
     private readonly HttpClient _httpClient;
     private readonly IConsulServiceRegistry _consulServiceMonitor;
     private readonly ILogger<ConsulMonitor> _logger;
@@ -29,6 +33,8 @@ public class ConsulMonitor: IConsulMonitor
         if (string.IsNullOrWhiteSpace(_consulTag))
             _consulTag = ConsulConfiguration.DefaultTag;
 
+        _advertise = configuration.Advertise;
+
         _consulServiceMonitor = consulServiceMonitor;
         _httpClient = httpClient;
         _logger = logger;
@@ -40,6 +46,56 @@ public class ConsulMonitor: IConsulMonitor
             () => Monitor(cancellationToken),
             TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach
         );
+    }
+
+    public async Task Register(ServiceAddress physical, ServiceAddress advertised)
+    {
+        var serviceId = CreateServiceId(physical.Host, physical.Port);
+
+        var request = new
+        {
+            ID = serviceId,
+            Name = "lb.mentalist.dev",
+            Tags = new[] {"metrics"},
+            Address = advertised.Host,
+            Port = advertised.Port,
+            Checks = new[]
+            {
+                new
+                {
+                    HTTP = $"http://{physical.Host}:{physical.Port}/status",
+                    Method = "GET",
+                    Interval = "10s",
+                    Timeout = "30s"
+                }
+            }
+        };
+
+        using var response = await _httpClient
+            .PutAsync($"{_consulEndpoint}/v1/agent/service/register", new ByteArrayContent(JsonSerializer.SerializeToUtf8Bytes(request)))
+            .ConfigureAwait(false);
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+        _logger.LogWarning("Registered in consul. Consul response: [{ResponseStatusCode}] {ResponseBody}", response.StatusCode, responseBody);
+    }
+
+    public async Task UnRegister(ServiceAddress physical)
+    {
+        var serviceId = CreateServiceId(physical.Host, physical.Port);
+
+        using var response = await _httpClient
+            .PutAsync($"{_consulEndpoint}/v1/agent/service/deregister/{serviceId}", new StringContent(string.Empty))
+            .ConfigureAwait(false);
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+        _logger.LogWarning("Unregistered from consul. Consul response: [{ResponseStatusCode}] {ResponseBody}", response.StatusCode, responseBody);
+    }
+
+    private static string CreateServiceId(string host, int port)
+    {
+        var hashCode = $"{host}:{port}".GetHashCode();
+        var serviceId = $"{hashCode:X}@lb.mentalist.dev".ToLower();
+        return serviceId;
     }
 
     private async Task Monitor(CancellationToken cancellationToken)
@@ -119,7 +175,7 @@ public class ConsulMonitor: IConsulMonitor
 
             return services ?? new Dictionary<string, string[]>();
         }
-        catch (TaskCanceledException e)
+        catch (TaskCanceledException)
         {
             return null;
         }

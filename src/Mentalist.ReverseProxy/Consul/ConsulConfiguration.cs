@@ -20,4 +20,5 @@ public class ConsulConfiguration
 
     public string Endpoint { get; set; } = string.Empty;
     public string Tag { get; set; } = DefaultTag;
+    public string Advertise { get; set; } = DefaultTag;
 }

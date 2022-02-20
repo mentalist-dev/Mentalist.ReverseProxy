@@ -6,8 +6,9 @@
                 "Microsoft.AspNetCore.HostFiltering": "Warning",
                 "Microsoft.AspNetCore.Routing": "Warning",
                 "Microsoft.AspNetCore.Watch": "Warning",
-                "Microsoft.AspNetCore.Server.Kestrel.Connections": "Warning",
+                "Microsoft.AspNetCore.Server": "Warning",
                 "Microsoft.Extensions.Http.DefaultHttpClientFactory": "Warning",
+                "System.Net.Http.HttpClient": "Warning",
                 "Yarp.ReverseProxy.Health.ActiveHealthCheckMonitor": "Warning"
             }
         },
@@ -22,7 +23,7 @@
             {
                 "Name": "File",
                 "Args": {
-                    "path": "C:\\Temp\\mentalist\\logs\\reverse-proxy\\reverse-proxy-.log",
+                    "path": "logs/reverse-proxy/reverse-proxy-.log",
                     "rollingInterval": "Day",
                     "fileSizeLimitBytes": "104857600",
                     "rollOnFileSizeLimit": true,

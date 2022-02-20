@@ -1,6 +1,12 @@
-docker rm /Mentalist.ReverseProxy -f
+set version=0.4.0
 
-docker build --no-cache --force-rm -t Mentalist.ReverseProxy -f Dockerfile .
-docker run -d -p 40000:40000 --name Mentalist.ReverseProxy Mentalist.ReverseProxy
+docker build --no-cache --force-rm -t reverse-proxy:%version% --build-arg VERSION=%version% -f Dockerfile .
+docker tag reverse-proxy:%version% reverse-proxy:latest
+
+docker tag reverse-proxy:%version% mentalistdev/reverse-proxy:%version%
+docker push mentalistdev/reverse-proxy:%version%
+
+docker tag reverse-proxy:%version% mentalistdev/reverse-proxy:latest
+docker push mentalistdev/reverse-proxy:latest
 
 docker image prune --filter label=stage=build -f

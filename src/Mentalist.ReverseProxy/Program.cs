@@ -1,6 +1,7 @@
 using Mentalist.ReverseProxy.Consul;
 using Mentalist.ReverseProxy.Metrics;
 using Mentalist.ReverseProxy.Routing;
+using Mentalist.ReverseProxy.Routing.Middleware;
 using Mentalist.ReverseProxy.Settings;
 using Mentalist.ReverseProxy.Status;
 using Prometheus;
@@ -29,12 +30,29 @@ var consul = new ConsulConfiguration();
 builder.Configuration.GetSection("Consul").Bind(consul);
 builder.Services.AddSingleton(_ => consul);
 
+var metrics = new MetricsConfiguration();
+builder.Configuration.GetSection("Metrics").Bind(metrics);
+builder.Services.AddSingleton(_ => metrics);
+
+var routing = new RoutingConfiguration();
+builder.Configuration.GetSection("Routing").Bind(routing);
+builder.Services.AddSingleton(_ => routing);
+
 builder.Services
     .AddReverseProxy()
     .LoadFromConsul(consul);
     //.LoadFromMemory(proxySettings);
 
+builder.Services.AddSingleton<IServiceDetailsProvider, ServiceDetailsProvider>();
+
 var app = builder.Build();
+
+app.UseMiddleware<AdvertiseLbMiddleware>();
+
+if (routing.ForceHttps)
+{
+    app.UseMiddleware<EnforceHttpsMiddleware>();
+}
 
 app.AddServiceUnavailableEndpoint();
 app.Map("/status", b => b.UseMiddleware<StatusMiddleware>());
@@ -44,7 +62,10 @@ app.UseRouting();
 app.UseHttpMetrics();
 app.UseEndpoints(endpoints =>
 {
-    endpoints.MapMetrics();
+    var metricsPath = metrics.Path;
+    if (string.IsNullOrWhiteSpace(metricsPath))
+        metricsPath = "/metrics";
+    endpoints.MapMetrics(metricsPath);
 });
 
 app.MapReverseProxy();

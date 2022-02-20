@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine3.14 AS base
 WORKDIR /app
 EXPOSE 80
+EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine3.14 AS build
 LABEL stage=build
@@ -15,5 +16,12 @@ RUN dotnet publish "./Mentalist.ReverseProxy/Mentalist.ReverseProxy.csproj" -c R
 
 FROM base AS final
 WORKDIR /app
+
+ENV ASPNETCORE_URLS="http://+:80;http://+:443"
+ENV Routing__ForceHttps="true"
+ENV Routing__HttpPort="80"
+ENV Routing__HttpsPort="443"
+ENV Routing__HttpsScheme="https"
+
 COPY --from=build /app .
 ENTRYPOINT ["dotnet", "Mentalist.ReverseProxy.dll"]

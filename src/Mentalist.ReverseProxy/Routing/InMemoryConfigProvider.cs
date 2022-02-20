@@ -37,6 +37,7 @@ public class InMemoryConfigProvider : IProxyConfigProvider
                 .WithTransformPathRouteValues(pattern: "/{**action}")
                 // this is needed for further call `WithTransformRequestHeader("X-Forwarded-Prefix", routeItem.Prefix, false)`
                 .WithTransformXForwarded(xPrefix: ForwardedTransformActions.Set)
+                .WithTransformUseOriginalHostHeader()
                 .WithTransformResponseHeaderRemove("x-frame-options", ResponseCondition.Always)
                 .WithTransformResponseHeaderRemove("server", ResponseCondition.Always)
                 .WithTransformResponseHeaderRemove("x-powered-by", ResponseCondition.Always);

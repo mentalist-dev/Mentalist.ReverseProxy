@@ -44,29 +44,36 @@ public class ConsulServiceMonitor : IDisposable
 
             while (!_isDisposed && !cancellationToken.IsCancellationRequested)
             {
-                var url = $"{_consulEndpoint}/v1/health/service/{_serviceName}?index={_serviceIndex}";
-                using var response = await _httpClient.GetAsync(url, cancellationToken);
-
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                if (!response.IsSuccessStatusCode)
+                try
                 {
-                    _logger.LogError(
-                        "Unable to get service list from consul. Response status code = {ResponseStatusCode}. Response content = {ResponseBody}",
-                        response.StatusCode.ToString(),
-                        responseContent
-                    );
+                    var url = $"{_consulEndpoint}/v1/health/service/{_serviceName}?index={_serviceIndex}";
+                    using var response = await _httpClient.GetAsync(url, cancellationToken);
 
-                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    var health = JsonSerializer.Deserialize<List<ConsulHealthResult>>(responseContent);
-                    _serviceIndex = response.GetConsulIndex(_serviceIndex);
-
-                    if (health != null)
+                    var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                    if (!response.IsSuccessStatusCode)
                     {
-                        _consulServiceMonitor.Update(health);
+                        _logger.LogError(
+                            "Unable to get service list from consul. Response status code = {ResponseStatusCode}. Response content = {ResponseBody}",
+                            response.StatusCode.ToString(),
+                            responseContent
+                        );
+
+                        await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken).ConfigureAwait(false);
                     }
+                    else
+                    {
+                        var health = JsonSerializer.Deserialize<List<ConsulHealthResult>>(responseContent);
+                        _serviceIndex = response.GetConsulIndex(_serviceIndex);
+
+                        if (health != null)
+                        {
+                            _consulServiceMonitor.Update(health);
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // 
                 }
             }
         }

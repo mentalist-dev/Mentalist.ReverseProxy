@@ -1,0 +1,70 @@
+version: '3.7'
+
+services:
+
+# change:
+#   node_name
+#   retry_join
+#   advertise
+  consul:
+    container_name: consul
+    image: consul:1.11.3
+    restart: unless-stopped
+    ports:
+      - "8500:8500"
+      - "8300:8300"
+      - "8301:8301"
+      - "8301:8301/udp"
+      - "8302:8302"
+      - "8302:8302/udp"
+    environment:
+      CONSUL_LOCAL_CONFIG: >
+        {
+          "addresses":{"http":"0.0.0.0"},
+          "datacenter": "local",
+          "node_name": "consul",
+          "log_level": "WARN",
+          "server": true,
+          "bootstrap": false,
+          "bootstrap_expect": 1,
+          "ui_config": {
+            "enabled": true
+          },
+          "enable_debug": false,
+          "leave_on_terminate": true,
+          "skip_leave_on_interrupt": false,
+          "rejoin_after_leave": true,
+          "autopilot": {"cleanup_dead_servers": false}
+        }
+    command: "agent -server"
+    networks:
+      - "routing"
+
+  fabio:
+    container_name: fabio
+    image: fabiolb/fabio:1.5.15-go1.15.5
+    restart: unless-stopped
+    ports:
+      - "9998:9998"
+      - "9999:9999"
+    environment:
+      registry_consul_addr: consul:8500
+    networks:
+      - "routing"
+
+  mentalist:
+    container_name: reverse-proxy
+    image: mentalistdev/reverse-proxy:0.3.5
+    restart: unless-stopped
+    pull_policy: always
+    environment:
+        Consul__Endpoint: "http://consul:8500"
+        Routing__ForceHttps: "false"
+    ports:
+      - "40404:80"
+      - "40405:443"
+    networks:
+      - "routing"
+
+networks:
+    routing:
