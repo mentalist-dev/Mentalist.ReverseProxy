@@ -67,7 +67,7 @@ public class ConsulServiceMonitor : IDisposable
 
                         if (health != null)
                         {
-                            _consulServiceMonitor.Update(health);
+                            _consulServiceMonitor.Update(_serviceName, health);
                         }
                     }
                 }

@@ -4,6 +4,7 @@ using Mentalist.ReverseProxy.Routing;
 using Mentalist.ReverseProxy.Routing.Middleware;
 using Mentalist.ReverseProxy.Settings;
 using Mentalist.ReverseProxy.Status;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Prometheus;
 using Serilog;
 
@@ -44,6 +45,11 @@ builder.Services
     //.LoadFromMemory(proxySettings);
 
 builder.Services.AddSingleton<IServiceDetailsProvider, ServiceDetailsProvider>();
+
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = 500 * 1024 * 1024;  // 500 MB
+});
 
 var app = builder.Build();
 

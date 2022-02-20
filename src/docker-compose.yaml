@@ -54,7 +54,7 @@ services:
 
   mentalist:
     container_name: reverse-proxy
-    image: mentalistdev/reverse-proxy:0.3.5
+    image: mentalistdev/reverse-proxy:0.4.0
     restart: unless-stopped
     pull_policy: always
     environment:
@@ -63,6 +63,26 @@ services:
     ports:
       - "40404:80"
       - "40405:443"
+    networks:
+      - "routing"
+
+  echo1:
+    container_name: echo1
+    image: ealen/echo-server
+    restart: unless-stopped
+    pull_policy: always
+    ports:
+      - "5678:80"
+    networks:
+      - "routing"
+
+  echo2:
+    container_name: echo2
+    image: ealen/echo-server
+    restart: unless-stopped
+    pull_policy: always
+    ports:
+      - "5679:80"
     networks:
       - "routing"
 

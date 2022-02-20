@@ -13,14 +13,26 @@ public interface IServiceDetailsProvider
 
 public class ServiceInformation
 {
-    public ServiceAddress Physical { get; init; }
-    public ServiceAddress Advertised { get; init; }
+    public ServiceInformation(ServiceAddress physical, ServiceAddress advertised)
+    {
+        Physical = physical;
+        Advertised = advertised;
+    }
+
+    public ServiceAddress Physical { get; }
+    public ServiceAddress Advertised { get; }
 }
 
 public class ServiceAddress
 {
-    public string Host { get; init; }
-    public int Port { get; init; }
+    public ServiceAddress(string host, int port)
+    {
+        Host = host;
+        Port = port;
+    }
+
+    public string Host { get; }
+    public int Port { get; }
 }
 
 public class ServiceDetailsProvider: IServiceDetailsProvider
@@ -68,11 +80,9 @@ public class ServiceDetailsProvider: IServiceDetailsProvider
             }
         }
 
-        return new ServiceInformation
-        {
-            Physical = new ServiceAddress {Host = serverHost, Port = serverPort},
-            Advertised = new ServiceAddress {Host = advertisedHost, Port = advertisedPort }
-        };
+        var physical = new ServiceAddress(serverHost, serverPort);
+        var advertised = new ServiceAddress(advertisedHost, advertisedPort);
+        return new ServiceInformation(physical, advertised);
     }
 
     private static string GetLocalIpAddress()
