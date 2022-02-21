@@ -38,9 +38,37 @@ public class RoutingStatusMiddleware
         var proxyConfig = _proxyConfigProvider.GetConfig();
         _serviceInformation ??= _service.GetInformation();
 
+        var resolvedIpAddress = string.Empty;
+        var remoteIpAddress = context.Connection.RemoteIpAddress;
+        if (remoteIpAddress != null)
+        {
+            try
+            {
+                resolvedIpAddress = remoteIpAddress.IsIPv4MappedToIPv6
+                    ? remoteIpAddress.MapToIPv4().ToString()
+                    : remoteIpAddress.ToString();
+            }
+            catch
+            {
+                resolvedIpAddress = remoteIpAddress.MapToIPv4().ToString();
+            }
+        }
+
         var data = new
         {
             Timestamp = DateTime.UtcNow,
+            Connection = remoteIpAddress == null ? null : new
+            {
+                AddressFamily = remoteIpAddress.AddressFamily.ToString(),
+                remoteIpAddress.IsIPv4MappedToIPv6,
+                remoteIpAddress.IsIPv6LinkLocal,
+                remoteIpAddress.IsIPv6Multicast,
+                remoteIpAddress.IsIPv6SiteLocal,
+                remoteIpAddress.IsIPv6Teredo,
+                remoteIpAddress.IsIPv6UniqueLocal,
+                RemoteIpAddress = remoteIpAddress.ToString(),
+                ResolvedIpAddress = resolvedIpAddress
+            },
             Server = new 
             {
                 _serviceInformation.Physical,
