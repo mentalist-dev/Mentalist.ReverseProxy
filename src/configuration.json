@@ -1,0 +1,11 @@
+{
+    "Restrictions": {
+        "IpRestrictionRules": {
+            "admin": {
+                "description": "Administrative routes are protected",
+                "path": [ "/routing-status", "/admin", "/*/health" ],
+                "sourceIp": [ "11.11.11.12" ]
+            }
+        }
+    }
+}

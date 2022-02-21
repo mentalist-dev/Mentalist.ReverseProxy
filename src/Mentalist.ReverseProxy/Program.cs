@@ -1,4 +1,5 @@
 using Mentalist.ReverseProxy.Consul;
+using Mentalist.ReverseProxy.Limits;
 using Mentalist.ReverseProxy.Metrics;
 using Mentalist.ReverseProxy.Routing;
 using Mentalist.ReverseProxy.Routing.Middleware;
@@ -18,6 +19,7 @@ builder.Host.UseSerilog((context, configuration) =>
 });
 
 builder.Configuration
+    .AddJsonFile("appsettings.overrides.json", optional: true)
     .AddJsonFile("serilog.json", optional: false)
     .AddJsonFile("services.json", optional: false)
     .AddEnvironmentVariables()
@@ -25,7 +27,6 @@ builder.Configuration
 
 var proxySettings = new Dictionary<string, ProxyRoute>();
 builder.Configuration.GetSection("ReverseProxyRoutes").Bind(proxySettings);
-builder.Services.AddSingleton(_ => proxySettings);
 
 var consul = new ConsulConfiguration();
 builder.Configuration.GetSection("Consul").Bind(consul);
@@ -39,6 +40,10 @@ var routing = new RoutingConfiguration();
 builder.Configuration.GetSection("Routing").Bind(routing);
 builder.Services.AddSingleton(_ => routing);
 
+var requestRestrictions = new RestrictionConfiguration();
+builder.Configuration.GetSection("Restrictions").Bind(requestRestrictions);
+builder.Services.AddSingleton(_ => requestRestrictions);
+
 builder.Services
     .AddReverseProxy()
     .LoadFromConsul(consul);
@@ -46,14 +51,22 @@ builder.Services
 
 builder.Services.AddSingleton<IServiceDetailsProvider, ServiceDetailsProvider>();
 
-builder.Services.Configure<KestrelServerOptions>(options =>
+if (requestRestrictions.RequestSizeLimitMb > 0)
 {
-    options.Limits.MaxRequestBodySize = 500 * 1024 * 1024;  // 500 MB
-});
+    builder.Services.Configure<KestrelServerOptions>(options =>
+    {
+        options.Limits.MaxRequestBodySize = requestRestrictions.RequestSizeLimitMb.Value * 1024 * 1024; // 500 MB
+    });
+}
 
 var app = builder.Build();
 
 app.UseMiddleware<AdvertiseLbMiddleware>();
+
+if (requestRestrictions.IpRestrictionsEnabled && requestRestrictions.IpRestrictionRules?.Count > 0)
+{
+    app.UseMiddleware<RestrictionValidationMiddleware>();
+}
 
 if (routing.ForceHttps)
 {

@@ -54,12 +54,15 @@ services:
 
   mentalist:
     container_name: reverse-proxy
-    image: mentalistdev/reverse-proxy:0.4.0
+    image: mentalistdev/reverse-proxy:0.5.9
     restart: unless-stopped
     pull_policy: always
     environment:
         Consul__Endpoint: "http://consul:8500"
         Routing__ForceHttps: "false"
+        Restrictions__IpRestrictionsEnabled: "false"
+    volumes:
+      - ./configuration.json:/app/appsettings.overrides.json
     ports:
       - "40404:80"
       - "40405:443"

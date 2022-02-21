@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text;
 using System.Text.Json;
+using Mentalist.ReverseProxy.Limits;
 using Mentalist.ReverseProxy.Settings;
 using Yarp.ReverseProxy.Configuration;
 
@@ -11,14 +12,18 @@ public class RoutingStatusMiddleware
     private readonly RequestDelegate _next;
     private readonly IProxyConfigProvider _proxyConfigProvider;
     private readonly IServiceDetailsProvider _service;
+    private readonly RestrictionConfiguration _restrictions;
+    private readonly IConfiguration _configuration;
 
     private ServiceInformation? _serviceInformation;
 
-    public RoutingStatusMiddleware(RequestDelegate next, IProxyConfigProvider proxyConfigProvider, IServiceDetailsProvider service)
+    public RoutingStatusMiddleware(RequestDelegate next, IProxyConfigProvider proxyConfigProvider, IServiceDetailsProvider service, RestrictionConfiguration restrictions, IConfiguration configuration)
     {
         _next = next ?? throw new ArgumentNullException(nameof(next));
         _proxyConfigProvider = proxyConfigProvider;
         _service = service;
+        _restrictions = restrictions;
+        _configuration = configuration;
     }
 
     public Task Invoke(HttpContext context)
@@ -85,6 +90,7 @@ public class RoutingStatusMiddleware
                 context.Request.IsHttps,
                 context.Request.Headers
             },
+            Restrictions = _restrictions,
             Routing = new
             {
                 proxyConfig.Routes,

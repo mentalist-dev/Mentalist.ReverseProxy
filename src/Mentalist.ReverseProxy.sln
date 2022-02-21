@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mentalist.ReverseProxy", "Mentalist.ReverseProxy\Mentalist.ReverseProxy.csproj", "{19F15884-3546-4DC7-BCFF-4CA2D492190D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mentalist.ReverseProxy", "Mentalist.ReverseProxy\Mentalist.ReverseProxy.csproj", "{19F15884-3546-4DC7-BCFF-4CA2D492190D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mentalist.ReverseProxy.Tests", "Mentalist.ReverseProxy.Tests\Mentalist.ReverseProxy.Tests.csproj", "{2E708E66-A047-4D87-904A-0DBC9A32AABE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{19F15884-3546-4DC7-BCFF-4CA2D492190D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19F15884-3546-4DC7-BCFF-4CA2D492190D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19F15884-3546-4DC7-BCFF-4CA2D492190D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E708E66-A047-4D87-904A-0DBC9A32AABE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E708E66-A047-4D87-904A-0DBC9A32AABE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E708E66-A047-4D87-904A-0DBC9A32AABE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E708E66-A047-4D87-904A-0DBC9A32AABE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
