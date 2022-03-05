@@ -1,9 +1,11 @@
-FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine3.14 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:6.0.2-alpine3.14 AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine3.14 AS build
+RUN apk update --no-cache && apk upgrade --no-cache
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0.200-alpine3.14 AS build
 LABEL stage=build
 ARG VERSION=0.0.1
 
@@ -24,4 +26,4 @@ ENV Routing__HttpsPort="443"
 ENV Routing__HttpsScheme="https"
 
 COPY --from=build /app .
-ENTRYPOINT ["dotnet", "Mentalist.ReverseProxy.dll"]
+ENTRYPOINT ["dotnet", "lb.dll"]

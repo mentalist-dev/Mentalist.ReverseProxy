@@ -1,4 +1,12 @@
 {
+    "LogzIo": {
+        "Url": "",
+        "BufferPathFormat": "logs/reverse-proxy/logzio-{Hour}.json",
+        "BoostProperties": true,
+        "IncludeMessageTemplate": true,
+        "LowercaseLevel": true
+    },
+
     "Serilog": {
         "MinimumLevel": {
             "Default": "Debug",
@@ -12,7 +20,7 @@
                 "Yarp.ReverseProxy.Health.ActiveHealthCheckMonitor": "Warning"
             }
         },
-        "Enrich": ["FromLogContext", "WithMachineName", "WithThreadId"],
+        "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ],
         "WriteTo": [
             {
                 "Name": "Console",
@@ -28,6 +36,19 @@
                     "fileSizeLimitBytes": "104857600",
                     "rollOnFileSizeLimit": true,
                     "outputTemplate": "[{Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}] {MachineName} {ThreadId} {RequestId} {CorrelationId} {Level:u3} {SourceContext} {Message}{NewLine}{Exception}"
+                }
+            },
+            {
+                "Name": "S3",
+                "Args": {
+                    "logFileFolder": "logs/reverse-proxy",
+                    "bucketName": "lb-logs",
+                    "accessKey": "",
+                    "secretKey": "",
+                    "region": "eu-west-1",
+                    "s3Path": "local/%timestamp%/lb",
+                    "filePrefix": "local",
+                    "period": "01:00:00"
                 }
             }
         ]

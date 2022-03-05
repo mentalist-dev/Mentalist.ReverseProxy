@@ -1,5 +1,6 @@
 using Mentalist.ReverseProxy.Consul;
 using Mentalist.ReverseProxy.Limits;
+using Mentalist.ReverseProxy.LogzIo;
 using Mentalist.ReverseProxy.Metrics;
 using Mentalist.ReverseProxy.Routing;
 using Mentalist.ReverseProxy.Routing.Middleware;
@@ -8,15 +9,10 @@ using Mentalist.ReverseProxy.Status;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Prometheus;
 using Serilog;
+using Serilog.Debugging;
+using Serilog.Sinks.Logz.Io;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Host.UseSerilog((context, configuration) =>
-{
-    configuration
-        .ReadFrom.Configuration(context.Configuration)
-        .WriteTo.Prometheus();
-});
 
 builder.Configuration
     .AddJsonFile("appsettings.overrides.json", optional: true)
@@ -25,12 +21,46 @@ builder.Configuration
     .AddEnvironmentVariables()
     .AddCommandLine(args);
 
+var consul = builder.Configuration.GetSection("Consul").Get<ConsulConfiguration>();
+builder.Services.AddSingleton(_ => consul);
+
+var logzIo = builder.Configuration.GetSection("LogzIo").Get<LogzIoConfiguration>();
+builder.Services.AddSingleton(_ => logzIo);
+
+builder.Host.UseSerilog((context, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .WriteTo.Prometheus();
+
+    configuration.Enrich.With(new ServiceNameEnricher(consul.ServiceName));
+
+    if (!string.IsNullOrWhiteSpace(logzIo.Url))
+    {
+        var textFormatterOptions = new LogzioTextFormatterOptions
+        {
+            BoostProperties = logzIo.BoostProperties,
+            IncludeMessageTemplate = logzIo.IncludeMessageTemplate,
+            LowercaseLevel = logzIo.LowercaseLevel,
+            FieldNaming = LogzIoTextFormatterFieldNaming.CamelCase
+        };
+
+        var bufferPathFormat = logzIo.BufferPathFormat;
+        if (string.IsNullOrWhiteSpace(bufferPathFormat))
+            bufferPathFormat = "buffer-{{Hour}}.json";
+
+        configuration.WriteTo.LogzIoDurableHttp(
+            logzIo.Url,
+            bufferPathFormat,
+            logzioTextFormatterOptions: textFormatterOptions
+        );
+    }
+
+    SelfLog.Enable(Console.Out);
+});
+
 var proxySettings = new Dictionary<string, ProxyRoute>();
 builder.Configuration.GetSection("ReverseProxyRoutes").Bind(proxySettings);
-
-var consul = new ConsulConfiguration();
-builder.Configuration.GetSection("Consul").Bind(consul);
-builder.Services.AddSingleton(_ => consul);
 
 var metrics = new MetricsConfiguration();
 builder.Configuration.GetSection("Metrics").Bind(metrics);
@@ -73,12 +103,15 @@ if (routing.ForceHttps)
     app.UseMiddleware<EnforceHttpsMiddleware>();
 }
 
+// app.UseHttpLogging();
+
 app.AddServiceUnavailableEndpoint();
 app.Map("/status", b => b.UseMiddleware<StatusMiddleware>());
 app.Map("/routing-status", b => b.UseMiddleware<RoutingStatusMiddleware>());
 
 app.UseRouting();
 app.UseHttpMetrics();
+
 app.UseEndpoints(endpoints =>
 {
     var metricsPath = metrics.Path;

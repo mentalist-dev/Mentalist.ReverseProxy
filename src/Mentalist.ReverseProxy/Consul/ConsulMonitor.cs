@@ -19,6 +19,7 @@ public class ConsulMonitor: IConsulMonitor
     private readonly string _consulEndpoint;
     private readonly string _consulTag;
     private readonly string _advertise;
+    private readonly string _serviceName;
     private readonly HttpClient _httpClient;
     private readonly IConsulServiceRegistry _consulServiceMonitor;
     private readonly ILogger<ConsulMonitor> _logger;
@@ -34,6 +35,9 @@ public class ConsulMonitor: IConsulMonitor
             _consulTag = ConsulConfiguration.DefaultTag;
 
         _advertise = configuration.Advertise;
+        _serviceName = configuration.ServiceName;
+        if (string.IsNullOrWhiteSpace(_serviceName))
+            _serviceName = ConsulConfiguration.DefaultServiceName;
 
         _consulServiceMonitor = consulServiceMonitor;
         _httpClient = httpClient;
@@ -50,15 +54,18 @@ public class ConsulMonitor: IConsulMonitor
 
     public async Task Register(ServiceAddress physical, ServiceAddress advertised)
     {
-        var serviceId = CreateServiceId(physical.Host, physical.Port);
+        var serviceId = CreateServiceId(_serviceName, physical.Host, physical.Port);
+
+        var address = advertised.Host;
+        var port = advertised.Port;
 
         var request = new
         {
             ID = serviceId,
-            Name = "lb.mentalist.dev",
+            Name = _serviceName,
             Tags = new[] {"metrics"},
-            Address = advertised.Host,
-            Port = advertised.Port,
+            Address = address,
+            Port = port,
             Checks = new[]
             {
                 new
@@ -81,7 +88,7 @@ public class ConsulMonitor: IConsulMonitor
 
     public async Task UnRegister(ServiceAddress physical)
     {
-        var serviceId = CreateServiceId(physical.Host, physical.Port);
+        var serviceId = CreateServiceId(_serviceName, physical.Host, physical.Port);
 
         using var response = await _httpClient
             .PutAsync($"{_consulEndpoint}/v1/agent/service/deregister/{serviceId}", new StringContent(string.Empty))
@@ -91,10 +98,10 @@ public class ConsulMonitor: IConsulMonitor
         _logger.LogWarning("Unregistered from consul. Consul response: [{ResponseStatusCode}] {ResponseBody}", response.StatusCode, responseBody);
     }
 
-    private static string CreateServiceId(string host, int port)
+    private static string CreateServiceId(string serviceName, string host, int port)
     {
         var hashCode = $"{host}:{port}".GetHashCode();
-        var serviceId = $"{hashCode:X}@lb.mentalist.dev".ToLower();
+        var serviceId = $"{hashCode:X}@{serviceName}".ToLower();
         return serviceId;
     }
 

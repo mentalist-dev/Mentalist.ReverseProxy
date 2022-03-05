@@ -17,8 +17,10 @@ public class ConsulConfiguration
     public const long ResetIndex = 0;
     public const string DefaultTag = "urlprefix-";
     public const string Passing = "passing";
+    public const string DefaultServiceName = "lb";
 
     public string Endpoint { get; set; } = string.Empty;
     public string Tag { get; set; } = DefaultTag;
     public string Advertise { get; set; } = DefaultTag;
+    public string ServiceName { get; set; } = DefaultServiceName;
 }
