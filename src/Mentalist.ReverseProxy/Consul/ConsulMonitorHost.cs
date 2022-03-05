@@ -6,51 +6,67 @@ public class ConsulMonitorHost: IHostedService
 {
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly IConsulMonitor _monitor;
-    private readonly IHostApplicationLifetime _lifetime;
     private readonly IServiceDetailsProvider _service;
+    private readonly ILogger<ConsulMonitorHost> _logger;
 
-    public ConsulMonitorHost(IConsulMonitor monitor, IHostApplicationLifetime  lifetime, IServiceDetailsProvider service)
+    public ConsulMonitorHost(IConsulMonitor monitor, IServiceDetailsProvider service, ILogger<ConsulMonitorHost> logger)
     {
         _monitor = monitor;
-        _lifetime = lifetime;
         _service = service;
+        _logger = logger;
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _lifetime.ApplicationStarted.Register(RegisterInConsul);
-        _lifetime.ApplicationStopping.Register(UnRegisterInConsul);
-
         _monitor.Start(_cancellationTokenSource.Token);
-        
-        return Task.CompletedTask;
+        await RegisterInConsul(_cancellationTokenSource.Token);
     }
 
-    private void RegisterInConsul()
-    {
-        var service = _service.GetInformation();
-
-        if (!string.IsNullOrWhiteSpace(service.Physical.Host))
-        {
-            var task = _monitor.Register(service.Physical, service.Advertised);
-            Task.WaitAll(task);
-        }
-    }
-
-    private void UnRegisterInConsul()
-    {
-        var service = _service.GetInformation();
-
-        if (!string.IsNullOrWhiteSpace(service.Physical.Host))
-        {
-            var task = _monitor.UnRegister(service.Physical);
-            Task.WaitAll(task);
-        }
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
         _cancellationTokenSource.Cancel();
-        return Task.CompletedTask;
+        await UnRegisterFromConsul();
+    }
+
+    private async Task RegisterInConsul(CancellationToken cancellationToken)
+    {
+        var service = _service.GetInformation();
+
+        if (!string.IsNullOrWhiteSpace(service.Physical.Host))
+        {
+            var finished = false;
+            var delayInSeconds = 0;
+            while (!finished)
+            {
+                try
+                {
+                    await _monitor.Register(service.Physical, service.Advertised);
+                    finished = true;
+                }
+                catch (Exception e)
+                {
+                    if (delayInSeconds < 30)
+                    {
+                        delayInSeconds += 1;
+                    }
+
+                    _logger.LogError(e,
+                        "Unable to do self registration in consul. Will sleep for {DelayInSeconds} seconds.",
+                        delayInSeconds);
+
+                    await Task.Delay(TimeSpan.FromSeconds(delayInSeconds), cancellationToken);
+                }
+            }
+        }
+    }
+
+    private async Task UnRegisterFromConsul()
+    {
+        var service = _service.GetInformation();
+
+        if (!string.IsNullOrWhiteSpace(service.Physical.Host))
+        {
+            await _monitor.UnRegister(service.Physical);
+        }
     }
 }
