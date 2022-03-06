@@ -92,6 +92,7 @@ if (requestRestrictions.RequestSizeLimitMb > 0)
 var app = builder.Build();
 
 app.UseMiddleware<AdvertiseLbMiddleware>();
+app.UseMiddleware<RequestInformationMiddleware>();
 
 if (requestRestrictions.IpRestrictionsEnabled && requestRestrictions.IpRestrictionRules?.Count > 0)
 {

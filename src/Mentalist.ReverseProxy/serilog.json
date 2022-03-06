@@ -11,13 +11,10 @@
         "MinimumLevel": {
             "Default": "Debug",
             "Override": {
-                "Microsoft.AspNetCore.HostFiltering": "Warning",
-                "Microsoft.AspNetCore.Routing": "Warning",
-                "Microsoft.AspNetCore.Watch": "Warning",
-                "Microsoft.AspNetCore.Server": "Warning",
-                "Microsoft.Extensions.Http.DefaultHttpClientFactory": "Warning",
+                "Microsoft.AspNetCore": "Warning",
+                "Microsoft.Extensions.Http": "Warning",
                 "System.Net.Http.HttpClient": "Warning",
-                "Yarp.ReverseProxy.Health.ActiveHealthCheckMonitor": "Warning"
+                "Yarp.ReverseProxy": "Warning"
             }
         },
         "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ],
