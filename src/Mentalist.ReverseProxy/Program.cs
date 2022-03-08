@@ -111,7 +111,10 @@ app.Map("/status", b => b.UseMiddleware<StatusMiddleware>());
 app.Map("/routing-status", b => b.UseMiddleware<RoutingStatusMiddleware>());
 
 app.UseRouting();
-app.UseHttpMetrics();
+
+app.UseMiddleware<HttpRequestDurationMiddleware>();
+// prometheus metrics produces too many metrics
+// app.UseHttpMetrics();
 
 app.UseEndpoints(endpoints =>
 {
