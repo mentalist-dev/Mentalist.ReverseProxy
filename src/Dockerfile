@@ -1,11 +1,12 @@
-FROM mcr.microsoft.com/dotnet/aspnet:6.0.2-alpine3.14 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:6.0.3-alpine3.14 AS base
+
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
 RUN apk update --no-cache && apk upgrade --no-cache
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0.200-alpine3.14 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0.201-alpine3.14 AS build
 LABEL stage=build
 ARG VERSION=0.0.1
 
