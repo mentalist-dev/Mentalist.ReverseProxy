@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Net;
+using System.Runtime.InteropServices;
 using Prometheus;
 
 namespace Mentalist.ReverseProxy.Routing.Middleware;
@@ -72,7 +73,9 @@ public class RequestInformationMiddleware
             }
 
             var message = "Request finished in";
-            if (context.RequestAborted.IsCancellationRequested)
+            if (context.RequestAborted.IsCancellationRequested || 
+                lastException?.Message.StartsWith("The client has disconnected") == true ||
+                lastException?.InnerException is COMException com && com.Message.StartsWith("The specified network name is no longer available."))
             {
                 HttpCancelledRequestCounter.Labels(method, action).Inc();
 

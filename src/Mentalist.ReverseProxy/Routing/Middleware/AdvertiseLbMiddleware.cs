@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
+using Mentalist.ReverseProxy.LogzIo;
 using Mentalist.ReverseProxy.Settings;
 
 namespace Mentalist.ReverseProxy.Routing.Middleware;
@@ -24,8 +26,18 @@ public class AdvertiseLbMiddleware
         {
             _serviceInformation ??= _service.GetInformation();
 
-            context.Response.Headers.Add("mentalist-lb-host", $"{_serviceInformation.Advertised.Host}:{_serviceInformation.Advertised.Port}");
-            context.Response.Headers.Add("mentalist-lb-ver", AssemblyVersion);
+            context.Response.Headers.Add("lb-host", $"{_serviceInformation.Advertised.Host}:{_serviceInformation.Advertised.Port}");
+            context.Response.Headers.Add("lb-ver", AssemblyVersion);
+
+            var activity = Activity.Current;
+            if (activity != null)
+            {
+                var traceId = activity.GetTraceId();
+                if (!string.IsNullOrWhiteSpace(traceId))
+                {
+                    context.Response.Headers.Add("lb-trace-id", traceId);
+                }
+            }
         }
 
         await _next(context).ConfigureAwait(false);

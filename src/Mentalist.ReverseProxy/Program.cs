@@ -33,6 +33,7 @@ builder.Host.UseSerilog((context, configuration) =>
         .ReadFrom.Configuration(context.Configuration)
         .WriteTo.Prometheus();
 
+    configuration.Enrich.With(new TraceActivityEnricher());
     configuration.Enrich.With(new ServiceNameEnricher(consul.ServiceName));
 
     if (!string.IsNullOrWhiteSpace(logzIo.Url))
