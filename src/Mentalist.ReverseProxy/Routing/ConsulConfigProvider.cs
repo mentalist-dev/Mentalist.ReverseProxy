@@ -42,10 +42,12 @@ public class ConsulConfigProvider: IConsulServiceRegistry
     private readonly ConcurrentDictionary<string, ServiceContainer> _services = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly ConsulConfiguration _configuration;
+    private readonly RoutingConfiguration _routing;
 
-    public ConsulConfigProvider(ConsulConfiguration configuration)
+    public ConsulConfigProvider(ConsulConfiguration configuration, RoutingConfiguration routing)
     {
         _configuration = configuration;
+        _routing = routing;
     }
 
     public void Update(string serviceName, List<ConsulHealthResult> consulHealth)
@@ -172,7 +174,7 @@ public class ConsulConfigProvider: IConsulServiceRegistry
         return serviceContainer;
     }
 
-    private static void CreateRouteConfig(string routeId, string path, Dictionary<string, RouteConfig> routeMap)
+    private void CreateRouteConfig(string routeId, string path, Dictionary<string, RouteConfig> routeMap)
     {
         if (!routeMap.ContainsKey(routeId))
         {
@@ -189,9 +191,16 @@ public class ConsulConfigProvider: IConsulServiceRegistry
                 // this is needed for further call `WithTransformRequestHeader("X-Forwarded-Prefix", routeItem.Prefix, false)`
                 .WithTransformXForwarded(xPrefix: ForwardedTransformActions.Set)
                 .WithTransformUseOriginalHostHeader()
-                .WithTransformResponseHeaderRemove("x-frame-options", ResponseCondition.Always)
-                .WithTransformResponseHeaderRemove("server", ResponseCondition.Always)
-                .WithTransformResponseHeaderRemove("x-powered-by", ResponseCondition.Always);
+                .WithTransformResponseHeaderRemove("Server", ResponseCondition.Always)
+                .WithTransformResponseHeaderRemove("X-Powered-By", ResponseCondition.Always)
+                .WithTransformResponseHeader("X-Frame-Options", "SAMEORIGIN", true, ResponseCondition.Always)
+                .WithTransformResponseHeader("X-XSS-Protection", "1; mode=block", true, ResponseCondition.Always)
+                .WithTransformResponseHeader("Referrer-Policy", "origin", true, ResponseCondition.Always);
+
+            if (_routing.ForceHttps && _routing.EnableHsts)
+            {
+                routeConfig.WithTransformResponseHeader("Strict-Transport-Security", "max-age=31536001; includeSubDomains; preload", true, ResponseCondition.Always);
+            }
 
             if (!string.IsNullOrWhiteSpace(path))
             {

@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.Extensions.Primitives;
 
 namespace Mentalist.ReverseProxy.Routing.Middleware;
 
@@ -8,12 +9,14 @@ public class EnforceHttpsMiddleware
     private readonly RequestDelegate _next;
     private readonly RoutingConfiguration _routing;
     private readonly ILogger<EnforceHttpsMiddleware> _logger;
+    private readonly StringValues _hstsHeader;
 
     public EnforceHttpsMiddleware(RequestDelegate next, RoutingConfiguration routing, ILogger<EnforceHttpsMiddleware> logger)
     {
         _next = next;
         _routing = routing;
         _logger = logger;
+        _hstsHeader = new StringValues("max-age=31536001; includeSubDomains; preload");
     }
 
     public Task Invoke(HttpContext context)
@@ -58,6 +61,12 @@ public class EnforceHttpsMiddleware
         }
 
         context.Request.Scheme = "https";
+
+        if (_routing.EnableHsts)
+        {
+            context.Response.Headers.StrictTransportSecurity = _hstsHeader;
+        }
+
         return _next(context);
     }
 }

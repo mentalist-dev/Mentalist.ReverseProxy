@@ -13,6 +13,7 @@ using Serilog.Debugging;
 using Serilog.Sinks.Logz.Io;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseKestrel(options => options.AddServerHeader = false);
 
 builder.Configuration
     .AddJsonFile("appsettings.overrides.json", optional: true)
