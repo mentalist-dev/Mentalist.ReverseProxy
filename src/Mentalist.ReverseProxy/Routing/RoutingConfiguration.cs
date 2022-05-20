@@ -7,4 +7,5 @@ public class RoutingConfiguration
     public int HttpPort { get; set; } = 80;
     public int HttpsPort { get; set; } = 443;
     public string HttpsScheme { get; set; } = "https";
+    public string XFrameOptions { get; set; } = "SAMEORIGIN";
 }

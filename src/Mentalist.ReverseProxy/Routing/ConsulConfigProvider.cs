@@ -193,9 +193,15 @@ public class ConsulConfigProvider: IConsulServiceRegistry
                 .WithTransformUseOriginalHostHeader()
                 .WithTransformResponseHeaderRemove("Server", ResponseCondition.Always)
                 .WithTransformResponseHeaderRemove("X-Powered-By", ResponseCondition.Always)
-                .WithTransformResponseHeader("X-Frame-Options", "SAMEORIGIN", true, ResponseCondition.Always)
                 .WithTransformResponseHeader("X-XSS-Protection", "1; mode=block", true, ResponseCondition.Always)
+                .WithTransformResponseHeader("X-Content-Type-Options", "nosniff", true, ResponseCondition.Always)
                 .WithTransformResponseHeader("Referrer-Policy", "origin", true, ResponseCondition.Always);
+
+            var allowedXFrameOptions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {"DENY", "SAMEORIGIN"};
+            if (!string.IsNullOrWhiteSpace(_routing.XFrameOptions) && allowedXFrameOptions.Contains(_routing.XFrameOptions)) 
+            {
+                routeConfig.WithTransformResponseHeader("X-Frame-Options", _routing.XFrameOptions, true, ResponseCondition.Always);
+            }
 
             if (_routing.ForceHttps && _routing.EnableHsts)
             {
