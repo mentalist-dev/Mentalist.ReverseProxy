@@ -26,7 +26,13 @@ public class AdvertiseLbMiddleware
         {
             _serviceInformation ??= _service.GetInformation();
 
-            context.Response.Headers.Add("lb-host", $"{_serviceInformation.Advertised.Host}:{_serviceInformation.Advertised.Port}");
+            var serviceHost = _serviceInformation.Advertised.Host;
+            if (_serviceInformation.Advertised.Port != 80 && _serviceInformation.Advertised.Port != 443)
+            {
+                serviceHost += $":{_serviceInformation.Advertised.Port}";
+            }
+
+            context.Response.Headers.Add("lb-host", serviceHost);
             context.Response.Headers.Add("lb-ver", AssemblyVersion);
 
             var activity = Activity.Current;

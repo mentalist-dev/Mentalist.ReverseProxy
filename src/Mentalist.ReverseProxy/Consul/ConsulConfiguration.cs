@@ -19,8 +19,11 @@ public class ConsulConfiguration
     public const string Passing = "passing";
     public const string DefaultServiceName = "lb";
 
+    public bool Enabled { get; set; } = true;
+
     public string Endpoint { get; set; } = string.Empty;
     public string Tag { get; set; } = DefaultTag;
-    public string Advertise { get; set; } = DefaultTag;
+    public string AdvertiseAddress { get; set; } = string.Empty;
+    public string PhysicalAddress { get; set; } = string.Empty;
     public string ServiceName { get; set; } = DefaultServiceName;
 }

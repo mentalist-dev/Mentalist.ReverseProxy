@@ -78,8 +78,8 @@ builder.Services.AddSingleton(_ => requestRestrictions);
 
 builder.Services
     .AddReverseProxy()
+    .LoadFromConfig(proxySettings)
     .LoadFromConsul(consul);
-    //.LoadFromMemory(proxySettings);
 
 builder.Services.AddSingleton<IServiceDetailsProvider, ServiceDetailsProvider>();
 
@@ -106,17 +106,14 @@ if (routing.ForceHttps)
     app.UseMiddleware<EnforceHttpsMiddleware>();
 }
 
-// app.UseHttpLogging();
-
 app.AddServiceUnavailableEndpoint();
 app.Map("/status", b => b.UseMiddleware<StatusMiddleware>());
 app.Map("/routing-status", b => b.UseMiddleware<RoutingStatusMiddleware>());
 
 app.UseRouting();
 
+// prometheus default metrics produces too many metrics
 app.UseMiddleware<HttpRequestDurationMiddleware>();
-// prometheus metrics produces too many metrics
-// app.UseHttpMetrics();
 
 app.UseEndpoints(endpoints =>
 {

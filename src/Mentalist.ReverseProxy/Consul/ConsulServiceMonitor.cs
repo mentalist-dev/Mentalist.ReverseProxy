@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using Mentalist.ReverseProxy.Consul.Models;
-using Mentalist.ReverseProxy.Routing;
+using Mentalist.ReverseProxy.Routing.Providers;
 
 namespace Mentalist.ReverseProxy.Consul;
 

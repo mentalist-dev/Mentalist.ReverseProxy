@@ -1,53 +1,53 @@
 {
-    "LogzIo": {
-        "Url": "",
-        "BufferPathFormat": "logs/reverse-proxy/logzio-{Hour}.json",
-        "BoostProperties": true,
-        "IncludeMessageTemplate": true,
-        "LowercaseLevel": true
-    },
+  "LogzIo": {
+    "Url": "",
+    "BufferPathFormat": "logs/reverse-proxy/logzio-{Hour}.json",
+    "BoostProperties": true,
+    "IncludeMessageTemplate": true,
+    "LowercaseLevel": true
+  },
 
-    "Serilog": {
-        "MinimumLevel": {
-            "Default": "Debug",
-            "Override": {
-                "Microsoft.AspNetCore": "Warning",
-                "Microsoft.Extensions.Http": "Warning",
-                "System.Net.Http.HttpClient": "Warning",
-                "Yarp.ReverseProxy": "Warning"
-            }
-        },
-        "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ],
-        "WriteTo": [
-            {
-                "Name": "Console",
-                "Args": {
-                    "outputTemplate": "[{Timestamp:yyyy-MM-dd HH:mm:ss.fffffff} [{RequestId}] [{SourceContext}] [{Level}] {Message}{NewLine}{Exception}"
-                }
-            },
-            {
-                "Name": "File",
-                "Args": {
-                    "path": "logs/reverse-proxy/reverse-proxy-.log",
-                    "rollingInterval": "Day",
-                    "fileSizeLimitBytes": "104857600",
-                    "rollOnFileSizeLimit": true,
-                    "outputTemplate": "[{Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}] {MachineName} {ThreadId} {RequestId} {CorrelationId} {Level:u3} {SourceContext} {Message}{NewLine}{Exception}"
-                }
-            },
-            {
-                "Name": "S3",
-                "Args": {
-                    "logFileFolder": "logs/reverse-proxy",
-                    "bucketName": "lb-logs",
-                    "accessKey": "",
-                    "secretKey": "",
-                    "region": "eu-west-1",
-                    "s3Path": "local/%timestamp%/lb",
-                    "filePrefix": "local",
-                    "period": "01:00:00"
-                }
-            }
-        ]
-    }
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Debug",
+      "Override": {
+        "Microsoft.AspNetCore": "Debug",
+        "Microsoft.Extensions.Http": "Warning",
+        "System.Net.Http.HttpClient": "Warning",
+        "Yarp.ReverseProxy": "Debug"
+      }
+    },
+    "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ],
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "[{Timestamp:yyyy-MM-dd HH:mm:ss.fffffff} [{RequestId}] [{SourceContext}] [{Level}] {Message}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs/reverse-proxy/reverse-proxy-.log",
+          "rollingInterval": "Day",
+          "fileSizeLimitBytes": "104857600",
+          "rollOnFileSizeLimit": true,
+          "outputTemplate": "[{Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}] {MachineName} {ThreadId} {RequestId} {CorrelationId} {Level:u3} {SourceContext} {Message}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "S3",
+        "Args": {
+          "logFileFolder": "logs/reverse-proxy",
+          "bucketName": "lb-logs",
+          "accessKey": "",
+          "secretKey": "",
+          "region": "eu-west-1",
+          "s3Path": "local/%timestamp%/lb",
+          "filePrefix": "local",
+          "period": "01:00:00"
+        }
+      }
+    ]
+  }
 }

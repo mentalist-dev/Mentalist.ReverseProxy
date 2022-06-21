@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Text.Json;
-using Mentalist.ReverseProxy.Routing;
+using Mentalist.ReverseProxy.Routing.Providers;
 using Mentalist.ReverseProxy.Settings;
 
 namespace Mentalist.ReverseProxy.Consul;
@@ -18,7 +18,6 @@ public class ConsulMonitor: IConsulMonitor
 
     private readonly string _consulEndpoint;
     private readonly string _consulTag;
-    private readonly string _advertise;
     private readonly string _serviceName;
     private readonly HttpClient _httpClient;
     private readonly IConsulServiceRegistry _consulServiceMonitor;
@@ -34,7 +33,6 @@ public class ConsulMonitor: IConsulMonitor
         if (string.IsNullOrWhiteSpace(_consulTag))
             _consulTag = ConsulConfiguration.DefaultTag;
 
-        _advertise = configuration.Advertise;
         _serviceName = configuration.ServiceName;
         if (string.IsNullOrWhiteSpace(_serviceName))
             _serviceName = ConsulConfiguration.DefaultServiceName;

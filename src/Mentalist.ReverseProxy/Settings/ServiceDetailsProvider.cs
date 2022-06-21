@@ -51,32 +51,41 @@ public class ServiceDetailsProvider: IServiceDetailsProvider
         var serverHost = GetLocalIpAddress();
         var serverPort = 80;
 
-        var addressFeature = _server.Features.Get<IServerAddressesFeature>();
-        if (addressFeature?.Addresses.Count > 0)
+        if (string.IsNullOrWhiteSpace(_configuration.PhysicalAddress))
         {
-            foreach (var address in addressFeature.Addresses)
+            var addressFeature = _server.Features.Get<IServerAddressesFeature>();
+            if (addressFeature?.Addresses.Count > 0)
             {
-                if (!string.IsNullOrWhiteSpace(address))
+                foreach (var address in addressFeature.Addresses)
                 {
-                    var uri = new Uri(address);
-                    serverPort = uri.Port;
-                    break;
+                    if (!string.IsNullOrWhiteSpace(address))
+                    {
+                        var uri = new Uri(address);
+                        serverPort = uri.Port;
+                        break;
+                    }
                 }
+            }
+        }
+        else
+        {
+            var nodes = _configuration.PhysicalAddress.Split(':');
+            serverHost = string.Join(':', nodes, 0, nodes.Length - 1);
+            if (nodes.Length > 1 && int.TryParse(nodes[^1], out var advertisePort))
+            {
+                serverPort = advertisePort;
             }
         }
 
         var advertisedHost = serverHost;
         var advertisedPort = serverPort;
-        if (!string.IsNullOrWhiteSpace(_configuration.Advertise))
+        if (!string.IsNullOrWhiteSpace(_configuration.AdvertiseAddress))
         {
-            var nodes = _configuration.Advertise.Split(':');
+            var nodes = _configuration.AdvertiseAddress.Split(':');
             advertisedHost = string.Join(':', nodes, 0, nodes.Length - 1);
-            if (nodes.Length > 1)
+            if (nodes.Length > 1 && int.TryParse(nodes[^1], out var advertisePort))
             {
-                if (int.TryParse(nodes[^1], out var advertisePort))
-                {
-                    advertisedPort = advertisePort;
-                }
+                advertisedPort = advertisePort;
             }
         }
 

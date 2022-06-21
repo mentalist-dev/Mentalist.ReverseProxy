@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using Mentalist.ReverseProxy.Consul;
+using Mentalist.ReverseProxy.Routing.Providers;
 using Mentalist.ReverseProxy.Settings;
 using Yarp.ReverseProxy.Configuration;
 
@@ -7,19 +8,24 @@ namespace Mentalist.ReverseProxy.Routing;
 
 public static class RouteConfigProviderExtensions
 {
-    public static IReverseProxyBuilder LoadFromMemory(this IReverseProxyBuilder builder, Dictionary<string, ProxyRoute> proxy)
+    public static IReverseProxyBuilder LoadFromConsul(this IReverseProxyBuilder builder, ConsulConfiguration consul)
     {
-        builder.Services.AddSingleton<IProxyConfigProvider>(new InMemoryConfigProvider(proxy));
+        if (consul.Enabled)
+        {
+            builder.Services.AddSingleton(consul);
+            builder.Services.AddHttpClient<IConsulMonitor, ConsulMonitor>();
+            builder.Services.AddSingleton<IConsulServiceRegistry, ConsulConfigProvider>();
+            builder.Services.AddSingleton<IProxyConfigProvider>(p => p.GetRequiredService<IConsulServiceRegistry>());
+            builder.Services.AddHostedService<ConsulMonitorHost>();
+        }
+
         return builder;
     }
 
-    public static IReverseProxyBuilder LoadFromConsul(this IReverseProxyBuilder builder, ConsulConfiguration configuration)
+    public static IReverseProxyBuilder LoadFromConfig(this IReverseProxyBuilder builder, Dictionary<string, ProxyRoute> routes)
     {
-        builder.Services.AddSingleton(configuration);
-        builder.Services.AddHttpClient<IConsulMonitor, ConsulMonitor>();
-        builder.Services.AddHostedService<ConsulMonitorHost>();
-        builder.Services.AddSingleton<IConsulServiceRegistry, ConsulConfigProvider>();
-        builder.Services.AddSingleton<IProxyConfigProvider>(p => p.GetRequiredService<IConsulServiceRegistry>());
+        builder.Services.AddSingleton(new StaticRouteConfiguration(routes));
+        builder.Services.AddSingleton<IProxyConfigProvider, StaticRouteConfigProvider>();
         return builder;
     }
 
