@@ -12,7 +12,7 @@ public class RouteConfigProvider
         _routing = routing;
     }
 
-    protected RouteConfig CreateRouteConfig(string routeId, string path, bool useOriginalHost = true)
+    protected RouteConfig CreateRouteConfig(string routeId, string path, string? prefix = null, bool useOriginalHost = true)
     {
         var routeConfig = new RouteConfig
             {
@@ -20,7 +20,7 @@ public class RouteConfigProvider
                 ClusterId = routeId,
                 Match = new RouteMatch
                 {
-                    Path = $"{path}/{{*action}}"
+                    Path = $"{path}/{{**action}}"
                 }
             }
             // .WithTransformPathRouteValues(pattern: "/{**action}")
@@ -31,6 +31,13 @@ public class RouteConfigProvider
             .WithTransformResponseHeader("X-XSS-Protection", "1; mode=block", true, ResponseCondition.Always)
             .WithTransformResponseHeader("X-Content-Type-Options", "nosniff", true, ResponseCondition.Always)
             .WithTransformResponseHeader("Referrer-Policy", "origin", true, ResponseCondition.Always);
+
+        if (!string.IsNullOrWhiteSpace(prefix))
+        {
+            routeConfig = routeConfig
+                .WithTransformPathRouteValues("/{**action}")
+                ;
+        }
 
         if (useOriginalHost)
         {

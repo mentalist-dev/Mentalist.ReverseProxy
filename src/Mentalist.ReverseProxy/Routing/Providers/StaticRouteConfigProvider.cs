@@ -36,7 +36,7 @@ public class StaticRouteConfigProvider : RouteConfigProvider, IProxyConfigProvid
 
             if (!routeMap.ContainsKey(routeId))
             {
-                var routeConfig = CreateRouteConfig(routeId, path, route.UseOriginalHost);
+                var routeConfig = CreateRouteConfig(routeId, path, route.Prefix, route.UseOriginalHost);
                 routeMap.Add(routeId, routeConfig);
             }
 
