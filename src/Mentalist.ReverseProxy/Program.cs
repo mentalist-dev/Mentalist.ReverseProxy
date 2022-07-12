@@ -22,6 +22,9 @@ builder.Configuration
     .AddEnvironmentVariables()
     .AddCommandLine(args);
 
+var settings = builder.Configuration.GetSection("App").Get<App>();
+builder.Services.AddSingleton(_ => settings);
+
 var consul = builder.Configuration.GetSection("Consul").Get<ConsulConfiguration>();
 builder.Services.AddSingleton(_ => consul);
 

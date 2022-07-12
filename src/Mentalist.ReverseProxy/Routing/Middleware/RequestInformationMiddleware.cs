@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
+using Mentalist.ReverseProxy.Settings;
 using Prometheus;
 
 namespace Mentalist.ReverseProxy.Routing.Middleware;
@@ -16,11 +17,13 @@ public class RequestInformationMiddleware
         });
 
     private readonly RequestDelegate _next;
+    private readonly App _settings;
     private readonly ILogger _logger;
 
-    public RequestInformationMiddleware(RequestDelegate next, ILogger<RequestInformation> logger)
+    public RequestInformationMiddleware(RequestDelegate next, App settings, ILogger<RequestInformation> logger)
     {
         _next = next;
+        _settings = settings;
         _logger = logger;
     }
 
@@ -40,7 +43,9 @@ public class RequestInformationMiddleware
         {
             count += 1;
             if (!string.IsNullOrWhiteSpace(p))
+            {
                 action += $"/{p}";
+            }
 
             if (count == 2)
                 break;
@@ -84,7 +89,7 @@ public class RequestInformationMiddleware
             }
 
             var elapsedMilliseconds = timer.ElapsedMilliseconds;
-            if (elapsedMilliseconds >= 1000 || logLevel == LogLevel.Error || logLevel == LogLevel.Warning)
+            if (elapsedMilliseconds >= _settings.LogWhenRequestIsLongerThanMilliseconds || logLevel == LogLevel.Error || logLevel == LogLevel.Warning)
             {
                 _logger.Log(logLevel, lastException,
                     message + " {ElapsedMilliseconds}ms {StatusCode}/{StatusCodeName} {ContentType}",
