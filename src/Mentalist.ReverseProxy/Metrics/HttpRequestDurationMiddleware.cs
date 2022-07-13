@@ -52,8 +52,17 @@ public class HttpRequestDurationMiddleware
         foreach (var p in path)
         {
             count += 1;
-            if (!string.IsNullOrWhiteSpace(p))
-                action += $"/{p}";
+
+            var node = p;
+
+            if (!string.IsNullOrWhiteSpace(node))
+            {
+                // do not include Guid's to metrics
+                if (Guid.TryParse(node, out _))
+                    node = "{id}";
+
+                action += $"/{node}";
+            }
 
             if (count == 2)
                 break;
