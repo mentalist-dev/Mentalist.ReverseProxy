@@ -59,7 +59,7 @@ public class HttpRequestDurationMiddleware
             {
                 // do not include Guid's to metrics
                 if (Guid.TryParse(node, out _))
-                    node = "{{id}}";
+                    node = "{id}";
 
                 action += $"/{node}";
             }
