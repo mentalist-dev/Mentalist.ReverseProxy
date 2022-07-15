@@ -1,3 +1,4 @@
+using Mentalist.ReverseProxy;
 using Mentalist.ReverseProxy.Consul;
 using Mentalist.ReverseProxy.Limits;
 using Mentalist.ReverseProxy.LogzIo;
@@ -79,6 +80,10 @@ var requestRestrictions = new RestrictionConfiguration();
 builder.Configuration.GetSection("Restrictions").Bind(requestRestrictions);
 builder.Services.AddSingleton(_ => requestRestrictions);
 
+var requestInformation = new RequestInformation();
+builder.Configuration.GetSection("RequestInformation").Bind(requestInformation);
+builder.Services.AddSingleton(_ => requestInformation);
+
 builder.Services
     .AddReverseProxy()
     .LoadFromConfig(proxySettings)
@@ -93,6 +98,8 @@ if (requestRestrictions.RequestSizeLimitMb > 0)
         options.Limits.MaxRequestBodySize = requestRestrictions.RequestSizeLimitMb.Value * 1024 * 1024; // 500 MB
     });
 }
+
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 

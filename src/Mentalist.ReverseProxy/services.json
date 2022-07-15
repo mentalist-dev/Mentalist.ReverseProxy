@@ -1,5 +1,6 @@
 {
   "ReverseProxyRoutes": {
+    /*
     "web": {
       "Path": "",
       "Prefix": "/web",
@@ -11,5 +12,6 @@
         "http://localhost:40123"
       ]
     }
+    */
   }
 }

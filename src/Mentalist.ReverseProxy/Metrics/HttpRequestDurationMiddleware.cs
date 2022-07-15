@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Mentalist.ReverseProxy.Tools;
 using Prometheus;
 
 namespace Mentalist.ReverseProxy.Metrics;
@@ -42,31 +43,7 @@ public class HttpRequestDurationMiddleware
         var timer = Stopwatch.StartNew();
 
         var method = context.Request.Method;
-        var pathBase = context.Request.PathBase.ToString();
-
-        var path = context.Request.Path.ToString()
-            .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        var action = pathBase;
-        var count = 0;
-        foreach (var p in path)
-        {
-            count += 1;
-
-            var node = p;
-
-            if (!string.IsNullOrWhiteSpace(node))
-            {
-                // do not include Guid's to metrics
-                if (Guid.TryParse(node, out _))
-                    node = "{id}";
-
-                action += $"/{node}";
-            }
-
-            if (count == 2)
-                break;
-        }
+        var action = context.Request.CreatePathTemplate();
 
         HttpRequestCounter
             .Labels(method, action)

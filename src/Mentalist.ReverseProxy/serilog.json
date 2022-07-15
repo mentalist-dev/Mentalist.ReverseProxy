@@ -1,7 +1,7 @@
 {
   "LogzIo": {
     "Url": "",
-    "BufferPathFormat": "logs/reverse-proxy/logzio-{Hour}.json",
+    "BufferPathFormat": "logs/reverse-proxy/Buffer",
     "BoostProperties": true,
     "IncludeMessageTemplate": true,
     "LowercaseLevel": true
