@@ -28,7 +28,7 @@ public class EnforceHttpsMiddleware
             var request = context.Request;
             var requestPath = request.Path.ToString().ToLower();
 
-            if (!requestPath.EndsWith("/status") && !requestPath.EndsWith("/metrics"))
+            if (!requestPath.EndsWith("/status") && !requestPath.EndsWith("/metrics") && !requestPath.EndsWith("/routing-status"))
             {
                 var host = request.Host;
 
@@ -52,7 +52,7 @@ public class EnforceHttpsMiddleware
                 context.Response.StatusCode = (int) HttpStatusCode.PermanentRedirect;
                 context.Response.Headers.Location = redirectUrl;
 
-                _logger.LogWarning("Redirecting to HTTPS: {RedirectUrl}", redirectUrl);
+                _logger.LogWarning("Redirecting {Url} to HTTPS: {RedirectUrl}", context.Request.GetDisplayUrl(), redirectUrl);
 
                 return Task.CompletedTask;
             }
