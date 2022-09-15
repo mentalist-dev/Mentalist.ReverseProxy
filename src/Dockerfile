@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0.302-alpine3.16 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0.401-alpine3.16 AS build
 LABEL stage=build
 ARG VERSION=0.0.1
 
@@ -9,7 +9,7 @@ RUN dotnet restore Mentalist.ReverseProxy.sln
 RUN dotnet build "./Mentalist.ReverseProxy/Mentalist.ReverseProxy.csproj" -c Release --no-restore /p:Version=${VERSION}
 RUN dotnet publish "./Mentalist.ReverseProxy/Mentalist.ReverseProxy.csproj" -c Release --no-restore --no-build -o /app
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0.7-alpine3.16 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:6.0.9-alpine3.16 AS final
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
