@@ -103,6 +103,14 @@ builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogWarning("Application is starting up!");
+
+var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+lifetime.ApplicationStarted.Register(() => logger.LogWarning("Application started"));
+lifetime.ApplicationStopping.Register(() => logger.LogWarning("Application stopping"));
+lifetime.ApplicationStopped.Register(() => logger.LogWarning("Application stopped"));
+
 app.UseMiddleware<AdvertiseLbMiddleware>();
 app.UseMiddleware<RequestInformationMiddleware>();
 
