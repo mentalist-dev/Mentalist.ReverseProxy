@@ -1,4 +1,5 @@
-﻿using Mentalist.ReverseProxy.Tools;
+﻿using System;
+using Mentalist.ReverseProxy.Tools;
 using Xunit;
 using Xunit.Abstractions;
 
