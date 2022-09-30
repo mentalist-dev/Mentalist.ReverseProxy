@@ -69,14 +69,26 @@ public class RequestInformationMiddleware
             }
 
             var message = "Request finished in";
-            if (context.RequestAborted.IsCancellationRequested || 
-                lastException?.Message.StartsWith("The client has disconnected") == true ||
-                lastException?.InnerException is COMException com && com.Message.StartsWith("The specified network name is no longer available."))
+            if (context.RequestAborted.IsCancellationRequested)
             {
                 HttpCancelledRequestCounter.Labels(method, action).Inc();
 
                 logLevel = LogLevel.Warning;
                 message = "Request cancelled after";
+            }
+            else if (lastException?.Message.StartsWith("The client has disconnected") == true)
+            {
+                HttpCancelledRequestCounter.Labels(method, action).Inc();
+
+                logLevel = LogLevel.Warning;
+                message = "The client has disconnected after";
+            }
+            else if (lastException?.InnerException is COMException com && com.Message.StartsWith("The specified network name is no longer available."))
+            {
+                HttpCancelledRequestCounter.Labels(method, action).Inc();
+
+                logLevel = LogLevel.Warning;
+                message = "The specified network name is no longer available after";
             }
 
             var elapsedMilliseconds = timer.ElapsedMilliseconds;

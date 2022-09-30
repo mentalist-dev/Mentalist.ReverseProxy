@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Microsoft.AspNetCore.Http.Features;
+using System.Net;
 using System.Text.RegularExpressions;
 
 namespace Mentalist.ReverseProxy.Limits;
@@ -35,14 +36,9 @@ public class RestrictionConfiguration
 
             if (ips.Length > 0)
             {
-                if (context.Connection.RemoteIpAddress == null)
+                var incomingIp = GetCallerIp(context);
+                if (incomingIp == null)
                     return new IpRestrictionValidationResult(false, ruleName, rule.Value);
-
-                var incomingIp = context.Connection.RemoteIpAddress;
-                if (context.Connection.RemoteIpAddress.IsIPv4MappedToIPv6)
-                {
-                    incomingIp = context.Connection.RemoteIpAddress.MapToIPv4();
-                }
 
                 ipMatch = IsIpMatching(incomingIp, ips);
             }
@@ -62,13 +58,49 @@ public class RestrictionConfiguration
                 pathMatch = IsPathMatching(requestPath, paths);
             }
 
-            if ((hostMatch == true || pathMatch == true) && ipMatch != true)
+            if ((hostMatch == true || pathMatch == true) && !ipMatch)
             {
                 return new IpRestrictionValidationResult(false, ruleName, rule.Value);
             }
         }
 
         return IsAllowedResult;
+    }
+
+    public static IPAddress? GetCallerIp(HttpContext context)
+    {
+        IPAddress? parsed;
+        var headers = context.Request.Headers;
+
+        if (headers.TryGetValue("X-Forwarded-For", out var value) && !string.IsNullOrWhiteSpace(value))
+        {
+            var addressList = value.ToString().Split(',');
+            if (addressList.Length > 0)
+            {
+                foreach (var address in addressList)
+                {
+                    var ip = address;
+                    if (ip.StartsWith("::ffff:"))
+                        ip = ip.Substring("::ffff:".Length);
+
+                    if (IPAddress.TryParse(ip, out parsed))
+                        return parsed;
+                }
+            }
+        }
+
+        var ipAddress = context.Connection.RemoteIpAddress?.ToString();
+
+        if (string.IsNullOrWhiteSpace(ipAddress))
+            ipAddress = context.Features.Get<IHttpConnectionFeature>()?.RemoteIpAddress?.ToString();
+
+        if (ipAddress?.StartsWith("::ffff:") == true)
+            ipAddress = ipAddress.Substring("::ffff:".Length);
+
+        if (!string.IsNullOrWhiteSpace(ipAddress) && IPAddress.TryParse(ipAddress, out parsed))
+            return parsed;
+
+        return null;
     }
 
     public static bool IsHostMatching(string requestHost, string[] hosts)

@@ -25,7 +25,7 @@ public class RouteConfigProvider
             }
             // .WithTransformPathRouteValues(pattern: "/{**action}")
             // this is needed for further call `WithTransformRequestHeader("X-Forwarded-Prefix", routeItem.Prefix, false)`
-            .WithTransformXForwarded(xPrefix: ForwardedTransformActions.Set)
+            .WithTransformXForwarded(xPrefix: ForwardedTransformActions.Set, xFor: ForwardedTransformActions.Append)
             .WithTransformResponseHeaderRemove("Server", ResponseCondition.Always)
             .WithTransformResponseHeaderRemove("X-Powered-By", ResponseCondition.Always)
             .WithTransformResponseHeader("X-XSS-Protection", "1; mode=block", true, ResponseCondition.Always)
