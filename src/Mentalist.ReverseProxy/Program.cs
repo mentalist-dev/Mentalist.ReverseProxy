@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Prometheus;
 using Serilog;
 using Serilog.Debugging;
+using Serilog.Sinks.Http;
 using Serilog.Sinks.Logz.Io;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,23 +44,41 @@ builder.Host.UseSerilog((context, configuration) =>
 
     if (!string.IsNullOrWhiteSpace(logzIo.Url))
     {
-        var textFormatterOptions = new LogzioTextFormatterOptions
+        var bufferBaseFileName = logzIo.BufferBaseFileName;
+        if (string.IsNullOrWhiteSpace(bufferBaseFileName))
+            bufferBaseFileName = "buffer";
+
+        if (logzIo.UseElasticCommonScheme)
         {
-            BoostProperties = logzIo.BoostProperties,
-            IncludeMessageTemplate = logzIo.IncludeMessageTemplate,
-            LowercaseLevel = logzIo.LowercaseLevel,
-            FieldNaming = LogzIoTextFormatterFieldNaming.CamelCase
-        };
+            var textFormatterOptions = new LogzioTextFormatterOptions
+            {
+                BoostProperties = logzIo.BoostProperties,
+                IncludeMessageTemplate = logzIo.IncludeMessageTemplate,
+                LowercaseLevel = logzIo.LowercaseLevel,
+                FieldNaming = LogzIoTextFormatterFieldNaming.CamelCase
+            };
 
-        var bufferPathFormat = logzIo.BufferPathFormat;
-        if (string.IsNullOrWhiteSpace(bufferPathFormat))
-            bufferPathFormat = "buffer-{{Hour}}.json";
+            configuration.WriteTo.LogzIoDurableHttp(
+                logzIo.Url,
+                bufferBaseFileName,
+                BufferRollingInterval.Hour,
+                logzioTextFormatterOptions: textFormatterOptions
+            );
+        }
+        else
+        {
+            var textFormatterOptions = new LogzioEcsTextFormatterOptions
+            {
+                LowercaseLevel = logzIo.LowercaseLevel,
+            };
 
-        configuration.WriteTo.LogzIoDurableHttp(
-            logzIo.Url,
-            bufferPathFormat,
-            logzioTextFormatterOptions: textFormatterOptions
-        );
+            configuration.WriteTo.LogzIoEcsDurableHttp(
+                logzIo.Url,
+                bufferBaseFileName,
+                BufferRollingInterval.Hour,
+                logzioTextFormatterOptions: textFormatterOptions
+            );
+        }
     }
 
     SelfLog.Enable(Console.Out);

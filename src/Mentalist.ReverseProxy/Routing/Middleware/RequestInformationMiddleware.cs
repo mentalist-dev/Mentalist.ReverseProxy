@@ -73,7 +73,7 @@ public class RequestInformationMiddleware
             {
                 HttpCancelledRequestCounter.Labels(method, action).Inc();
 
-                logLevel = LogLevel.Warning;
+                logLevel = LogLevel.Information;
                 message = "Request cancelled after";
             }
             else if (lastException?.Message.StartsWith("The client has disconnected") == true)

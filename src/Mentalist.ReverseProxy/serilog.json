@@ -1,10 +1,11 @@
 {
   "LogzIo": {
     "Url": "",
-    "BufferPathFormat": "logs/reverse-proxy/Buffer",
+    "BufferBaseFileName": "logs/reverse-proxy/Buffer",
     "BoostProperties": true,
     "IncludeMessageTemplate": true,
-    "LowercaseLevel": true
+    "LowercaseLevel": true,
+    "UseElasticCommonScheme": false
   },
 
   "Serilog": {
