@@ -33,6 +33,12 @@ builder.Services.AddSingleton(_ => consul);
 var logzIo = builder.Configuration.GetSection("LogzIo").Get<LogzIoConfiguration>();
 builder.Services.AddSingleton(_ => logzIo);
 
+Metrics.SuppressDefaultMetrics(new SuppressDefaultMetricOptions
+{
+    SuppressEventCounters = true,
+    SuppressMeters = true
+});
+
 builder.Host.UseSerilog((context, configuration) =>
 {
     configuration
@@ -50,6 +56,20 @@ builder.Host.UseSerilog((context, configuration) =>
 
         if (logzIo.UseElasticCommonScheme)
         {
+            var textFormatterOptions = new LogzioEcsTextFormatterOptions
+            {
+                LowercaseLevel = logzIo.LowercaseLevel,
+            };
+
+            configuration.WriteTo.LogzIoEcsDurableHttp(
+                logzIo.Url,
+                bufferBaseFileName,
+                BufferRollingInterval.Hour,
+                logzioTextFormatterOptions: textFormatterOptions
+            );
+        }
+        else
+        {
             var textFormatterOptions = new LogzioTextFormatterOptions
             {
                 BoostProperties = logzIo.BoostProperties,
@@ -59,20 +79,6 @@ builder.Host.UseSerilog((context, configuration) =>
             };
 
             configuration.WriteTo.LogzIoDurableHttp(
-                logzIo.Url,
-                bufferBaseFileName,
-                BufferRollingInterval.Hour,
-                logzioTextFormatterOptions: textFormatterOptions
-            );
-        }
-        else
-        {
-            var textFormatterOptions = new LogzioEcsTextFormatterOptions
-            {
-                LowercaseLevel = logzIo.LowercaseLevel,
-            };
-
-            configuration.WriteTo.LogzIoEcsDurableHttp(
                 logzIo.Url,
                 bufferBaseFileName,
                 BufferRollingInterval.Hour,
