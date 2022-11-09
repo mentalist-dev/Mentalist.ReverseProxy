@@ -101,7 +101,7 @@ public class RequestInformationMiddleware
         }
     }
 
-    private IDisposable BuildLoggerScope(HttpContext context, string method)
+    private IDisposable? BuildLoggerScope(HttpContext context, string method)
     {
         var state = new List<KeyValuePair<string, object>>
         {
@@ -200,7 +200,7 @@ public class RequestInformationMiddleware
                 _cache.Set(cacheKey, container, TimeSpan.FromHours(2));
             }
 
-            container.FillState(state);
+            container?.FillState(state);
         }
     }
 

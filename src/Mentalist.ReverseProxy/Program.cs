@@ -25,12 +25,15 @@ builder.Configuration
     .AddCommandLine(args);
 
 var settings = builder.Configuration.GetSection("App").Get<App>();
+if (settings == null) throw new NotSupportedException("'App' configuration section is not specified!");
 builder.Services.AddSingleton(_ => settings);
 
 var consul = builder.Configuration.GetSection("Consul").Get<ConsulConfiguration>();
+if (consul == null) throw new NotSupportedException("'Consul' configuration section is not specified!");
 builder.Services.AddSingleton(_ => consul);
 
 var logzIo = builder.Configuration.GetSection("LogzIo").Get<LogzIoConfiguration>();
+if (logzIo == null) throw new NotSupportedException("'LogzIo' configuration section is not specified!");
 builder.Services.AddSingleton(_ => logzIo);
 
 Metrics.SuppressDefaultMetrics(new SuppressDefaultMetricOptions
@@ -158,13 +161,11 @@ app.UseRouting();
 // prometheus default metrics produces too many metrics
 app.UseMiddleware<HttpRequestDurationMiddleware>();
 
-app.UseEndpoints(endpoints =>
-{
-    var metricsPath = metrics.Path;
-    if (string.IsNullOrWhiteSpace(metricsPath))
-        metricsPath = "/metrics";
-    endpoints.MapMetrics(metricsPath);
-});
+var metricsPath = metrics.Path;
+if (string.IsNullOrWhiteSpace(metricsPath))
+    metricsPath = "/metrics";
+
+app.MapMetrics(metricsPath);
 
 app.MapReverseProxy();
 
