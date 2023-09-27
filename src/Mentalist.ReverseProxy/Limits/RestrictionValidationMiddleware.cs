@@ -26,8 +26,9 @@ public class RestrictionValidationMiddleware
         }
 
         _logger.LogWarning(
-            "Request is not allowed because of restrictions. Violated rule = {@ViolatedRule}",
-            validationResult.ViolatedRule);
+            "Request is not allowed because of restrictions. Violated rule name: {ViolatedRuleName}. Violated rule = {@ViolatedRule}",
+            validationResult.ViolatedRuleName, validationResult.ViolatedRule
+        );
 
         var data = new
         {

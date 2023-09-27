@@ -6,7 +6,7 @@ namespace Mentalist.ReverseProxy.Limits;
 
 public class RestrictionConfiguration
 {
-    private static readonly IpRestrictionValidationResult IsAllowedResult = new(true);
+    private static readonly IpRestrictionValidationResult IsAllowedResult = IpRestrictionValidationResult.IsAllowedResult();
 
     public int? RequestSizeLimitMb { get; set; }
     public bool IpRestrictionsEnabled { get; set; }
@@ -23,7 +23,6 @@ public class RestrictionConfiguration
         {
             var ruleName = rule.Key;
 
-            bool ipMatch = false;
             bool? hostMatch = null;
             bool? pathMatch = null;
 
@@ -34,14 +33,11 @@ public class RestrictionConfiguration
                 continue;
             }
 
-            if (ips.Length > 0)
-            {
-                var incomingIp = GetCallerIp(context);
-                if (incomingIp == null)
-                    return new IpRestrictionValidationResult(false, ruleName, rule.Value);
+            var incomingIp = GetCallerIp(context);
+            if (incomingIp == null)
+                return IpRestrictionValidationResult.IsNotAllowedResult(ruleName, rule.Value, "null");
 
-                ipMatch = IsIpMatching(incomingIp, ips);
-            }
+            var ipMatch = IsIpMatching(incomingIp, ips);
 
             var hosts = rule.Value.Host;
             if (hosts?.Length > 0)
@@ -60,7 +56,7 @@ public class RestrictionConfiguration
 
             if ((hostMatch == true || pathMatch == true) && !ipMatch)
             {
-                return new IpRestrictionValidationResult(false, ruleName, rule.Value);
+                return IpRestrictionValidationResult.IsNotAllowedResult(ruleName, rule.Value, incomingIp.ToString());
             }
         }
 
