@@ -147,7 +147,7 @@ if (requestRestrictions.IpRestrictionsEnabled && requestRestrictions.IpRestricti
     app.UseMiddleware<RestrictionValidationMiddleware>();
 }
 
-if (routing.ForceHttps)
+if (routing.ForceHttps || routing.AssumeHttps)
 {
     app.UseMiddleware<EnforceHttpsMiddleware>();
 }

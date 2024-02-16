@@ -21,7 +21,7 @@ public class EnforceHttpsMiddleware
 
     public Task Invoke(HttpContext context)
     {
-        if (_routing.HttpPort > 0 && context.Connection.LocalPort == _routing.HttpPort)
+        if (!_routing.AssumeHttps && _routing.HttpPort > 0 && context.Connection.LocalPort == _routing.HttpPort)
         {
             context.Request.Scheme = "http";
 
