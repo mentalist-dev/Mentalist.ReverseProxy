@@ -1,4 +1,4 @@
-set version=2.2.2
+set version=2.3.0
 
 docker build --no-cache --force-rm -t reverse-proxy:%version% --build-arg VERSION=%version% -f Dockerfile .
 docker tag reverse-proxy:%version% reverse-proxy:latest

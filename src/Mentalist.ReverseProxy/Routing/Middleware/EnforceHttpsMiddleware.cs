@@ -4,24 +4,16 @@ using Microsoft.Extensions.Primitives;
 
 namespace Mentalist.ReverseProxy.Routing.Middleware;
 
-public class EnforceHttpsMiddleware
+public class EnforceHttpsMiddleware(
+    RequestDelegate next,
+    RoutingConfiguration routing,
+    ILogger<EnforceHttpsMiddleware> logger)
 {
-    private readonly RequestDelegate _next;
-    private readonly RoutingConfiguration _routing;
-    private readonly ILogger<EnforceHttpsMiddleware> _logger;
-    private readonly StringValues _hstsHeader;
-
-    public EnforceHttpsMiddleware(RequestDelegate next, RoutingConfiguration routing, ILogger<EnforceHttpsMiddleware> logger)
-    {
-        _next = next;
-        _routing = routing;
-        _logger = logger;
-        _hstsHeader = new StringValues("max-age=31536001; includeSubDomains; preload");
-    }
+    private readonly StringValues _hstsHeader = new("max-age=31536001; includeSubDomains; preload");
 
     public Task Invoke(HttpContext context)
     {
-        if (!_routing.AssumeHttps && _routing.HttpPort > 0 && context.Connection.LocalPort == _routing.HttpPort)
+        if (!routing.AssumeHttps && routing.HttpPort > 0 && context.Connection.LocalPort == routing.HttpPort)
         {
             context.Request.Scheme = "http";
 
@@ -32,11 +24,11 @@ public class EnforceHttpsMiddleware
             {
                 var host = request.Host;
 
-                var port = _routing.HttpsPort;
+                var port = routing.HttpsPort;
                 if (port <= 0)
                     port = 443;
 
-                var scheme = _routing.HttpsScheme;
+                var scheme = routing.HttpsScheme;
                 if (string.IsNullOrWhiteSpace(scheme))
                     scheme = "https";
 
@@ -52,21 +44,21 @@ public class EnforceHttpsMiddleware
                 context.Response.StatusCode = (int) HttpStatusCode.PermanentRedirect;
                 context.Response.Headers.Location = redirectUrl;
 
-                _logger.LogWarning("Redirecting {Url} to HTTPS: {RedirectUrl}", context.Request.GetDisplayUrl(), redirectUrl);
+                logger.LogWarning("Redirecting {Url} to HTTPS: {RedirectUrl}", context.Request.GetDisplayUrl(), redirectUrl);
 
                 return Task.CompletedTask;
             }
 
-            return _next(context);
+            return next(context);
         }
 
         context.Request.Scheme = "https";
 
-        if (_routing.EnableHsts)
+        if (routing.EnableHsts)
         {
             context.Response.Headers.StrictTransportSecurity = _hstsHeader;
         }
 
-        return _next(context);
+        return next(context);
     }
 }
